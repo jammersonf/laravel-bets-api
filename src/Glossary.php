@@ -28,4 +28,16 @@ class Glossary
     public const SPORT_BEACH_VOLLEYBALL = 95;
     public const SPORT_WATER_POLO = 110;
     public const SPORT_SQUASH = 107;
+    public const COUNTRY_EN = 1;
+    public const COUNTRY_ZH_TW = 2;
+    public const COUNTRY_ES_ES = 3;
+    public const COUNTRY_DE_DE = 5;
+    public const COUNTRY_IT_IT = 6;
+    public const COUNTRY_SV_SE = 8;
+    public const COUNTRY_ZH_CN = 10;
+    public const COUNTRY_PT_PT = 22;
+    public const COUNTRY_JA_JP = 70;
+    public const COUNTRY_KO_KR = 71;
+    public const COUNTRY_FR_FR = 72;
+    public const COUNTRY_RU_RU = 73;
 }

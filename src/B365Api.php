@@ -13,7 +13,7 @@ use Andonovn\LaravelBetsApi\Events\ {
     ResponseReceived, RequestFailed
 };
 
-class BetsApi
+class B365Api
 {
     /**
      * @var Client
@@ -97,9 +97,9 @@ class BetsApi
      * Set the country
      *
      * @param  string  $country
-     * @return BetsApi
+     * @return B365Api
      */
-    public function forCountry(string $country) : BetsApi
+    public function forCountry(string $country) : B365Api
     {
         $this->country = $country;
 
@@ -110,9 +110,9 @@ class BetsApi
      * Set the date
      *
      * @param  string  $date
-     * @return BetsApi
+     * @return B365Api
      */
-    public function forDate(string $date) : BetsApi
+    public function forDate(string $date) : B365Api
     {
         $this->date = $date;
 
@@ -126,14 +126,14 @@ class BetsApi
      * @return array
      * @throws CallFailedException
      */
-    public function leagues(int $sportId) : array
+    public function upcoming(int $sportId) : array
     {
         $leagues = [];
 
         $page = 1;
 
         do {
-            $leagueResponse = $this->leaguesCall($sportId, $page++);
+            $leagueResponse = $this->upcomingCall($sportId, $page++);
 
             $totalPages = (int) ceil(
                 $leagueResponse['pager']['total'] / $leagueResponse['pager']['per_page']
@@ -153,7 +153,18 @@ class BetsApi
      */
     public function soccerLeagues() : array
     {
-        return $this->leagues(Glossary::SPORT_SOCCER);
+        return $this->upcoming(Glossary::SPORT_SOCCER);
+    }
+
+    /**
+     * Get the soccer's leagues inPlay
+     *
+     * @return array
+     * @throws CallFailedException
+     */
+    public function soccerLeaguesInPlay() : array
+    {
+        return $this->liveEvents(Glossary::SPORT_SOCCER);
     }
 
     /**
@@ -164,7 +175,7 @@ class BetsApi
      */
     public function basketballLeagues() : array
     {
-        return $this->leagues(Glossary::SPORT_BASKETBALL);
+        return $this->upcoming(Glossary::SPORT_BASKETBALL);
     }
 
     /**
@@ -175,7 +186,7 @@ class BetsApi
      */
     public function tennisLeagues() : array
     {
-        return $this->leagues(Glossary::SPORT_TENNIS);
+        return $this->upcoming(Glossary::SPORT_TENNIS);
     }
 
     /**
@@ -186,7 +197,7 @@ class BetsApi
      */
     public function cricketLeagues() : array
     {
-        return $this->leagues(Glossary::SPORT_CRICKET);
+        return $this->upcoming(Glossary::SPORT_CRICKET);
     }
 
     /**
@@ -197,7 +208,7 @@ class BetsApi
      */
     public function hockeyLeagues() : array
     {
-        return $this->leagues(Glossary::SPORT_ICE_HOCKEY);
+        return $this->upcoming(Glossary::SPORT_ICE_HOCKEY);
     }
 
     /**
@@ -208,7 +219,7 @@ class BetsApi
      */
     public function baseballLeagues() : array
     {
-        return $this->leagues(Glossary::SPORT_BASEBALL);
+        return $this->upcoming(Glossary::SPORT_BASEBALL);
     }
 
     /**
@@ -219,7 +230,7 @@ class BetsApi
      */
     public function americanFootballLeagues() : array
     {
-        return $this->leagues(Glossary::SPORT_AMERICAN_FOOTBALL);
+        return $this->upcoming(Glossary::SPORT_AMERICAN_FOOTBALL);
     }
 
     /**
@@ -230,7 +241,7 @@ class BetsApi
      */
     public function fightLeagues() : array
     {
-        return $this->leagues(Glossary::SPORT_BOXING_UFC);
+        return $this->upcoming(Glossary::SPORT_BOXING_UFC);
     }
 
     /**
@@ -273,6 +284,19 @@ class BetsApi
     }
 
     /**
+     * View an event
+     *
+     * @param  int $eventId
+     * @return array
+     * @throws CallFailedException
+     */
+    public function viewLiveEvent(int $eventId) : array
+    {
+        return current($this->eventLiveViewCall($eventId)['results']);
+    }
+
+
+    /**
      * Get the given league's live events
      *
      * @param  int $sportId
@@ -280,120 +304,11 @@ class BetsApi
      * @return array
      * @throws CallFailedException
      */
-    public function liveEvents(int $sportId, int $leagueId) : array
+    public function liveEvents(int $sportId, $leagueId = '') : array
     {
-        $events = [];
-
-        $page = 1;
-
-        do {
-            $eventsResponse = $this->liveEventsCall($sportId, $leagueId, $page++);
-
-            $totalPages = (int) ceil(
-                $eventsResponse['pager']['total'] / $eventsResponse['pager']['per_page']
-            );
-
-            $events = array_merge($events, $eventsResponse['results']);
-        } while ($page <= $totalPages);
+        $events = $this->liveEventsCall($sportId, $leagueId);
 
         return $events;
-    }
-
-    /**
-     * Get the given sport's ended events
-     *
-     * @param  int $sportId
-     * @param  int $leagueId
-     * @return array
-     * @throws CallFailedException
-     */
-    public function endedEvents(int $sportId, int $leagueId) : array
-    {
-        $events = [];
-
-        $page = 1;
-
-        do {
-            $eventsResponse = $this->endedEventsCall($sportId, $leagueId, $page++);
-
-            $totalPages = (int) ceil(
-                $eventsResponse['pager']['total'] / $eventsResponse['pager']['per_page']
-            );
-
-            $events = array_merge($events, $eventsResponse['results']);
-        } while ($page <= $totalPages);
-
-        return $events;
-    }
-
-    /**
-     * Get the events merge history
-     *
-     * @param  int|null  $since
-     * @return array
-     * @throws CallFailedException
-     */
-    public function eventsMergeHistory(?int $since = null) : array
-    {
-        $events = [];
-
-        $page = 1;
-
-        do {
-            $eventsResponse = $this->eventsMergeHistoryCall($page++, $since);
-
-            $totalPages = (int) ceil(
-                $eventsResponse['pager']['total'] / $eventsResponse['pager']['per_page']
-            );
-
-            $events = array_merge($events, $eventsResponse['results']);
-        } while ($page <= $totalPages);
-
-        return $events;
-    }
-
-    /**
-     * Get the given event's odds
-     *
-     * @param  int $eventId
-     * @return array
-     * @throws CallFailedException
-     */
-    public function odds(int $eventId) : array
-    {
-        $odds = [];
-
-        $oddsResponse = $this->oddsCall($eventId);
-
-        foreach ($oddsResponse['results'] as $bookmaker => $bookmakerOdds) {
-            if (
-                ! isset($bookmakerOdds['end']['1_1']['home_od'])
-                || ! isset($bookmakerOdds['end']['1_1']['draw_od'])
-                || ! isset($bookmakerOdds['end']['1_1']['away_od'])
-            ) {
-                continue;
-            }
-
-            $odds['bookmaker'] = $bookmaker;
-            $odds['result'] = [
-                'home' => $bookmakerOdds['end']['1_1']['home_od'],
-                'draw' => $bookmakerOdds['end']['1_1']['draw_od'],
-                'away' => $bookmakerOdds['end']['1_1']['away_od'],
-            ];
-
-            break;
-        }
-
-        if (empty($odds['result'])) {
-            $odds['bookmaker'] = null;
-            $odds['result'] = [
-                'home' => null,
-                'draw' => null,
-                'away' => null,
-            ];
-        }
-
-        return $odds;
     }
 
     /**
@@ -432,16 +347,16 @@ class BetsApi
     }
 
     /**
-     * Call the BetsApi to get the leagues
+     * Call the B365Api to get the leagues
      *
      * @param  int $sportId
      * @param  int $page
      * @return array
      * @throws CallFailedException
      */
-    protected function leaguesCall(int $sportId, int $page) : array
+    protected function upcomingCall(int $sportId, int $page) : array
     {
-        $endpoint = $this->endpoint('league', $page)
+        $endpoint = $this->endpoint('upcoming', $page)
             . '&sport_id=' . $sportId
             . ($this->country ? '&cc=' . $this->country : '');
 
@@ -449,7 +364,7 @@ class BetsApi
     }
 
     /**
-     * Call the BetsApi to get the events
+     * Call the B365Api to get the events
      *
      * @param  int $sportId
      * @param  int $leagueId
@@ -459,14 +374,14 @@ class BetsApi
      */
     protected function eventsCall(int $sportId, int $leagueId, int $page) : array
     {
-        $endpoint = $this->endpointV2('events/upcoming', $page)
+        $endpoint = $this->endpointV2('upcoming', $page)
             . '&league_id=' . $leagueId . '&sport_id=' . $sportId;
 
         return $this->call($endpoint);
     }
     
     /**
-     * Call the BetsApi to view an event
+     * Call the B365Api to view an event
      *
      * @param  int $eventId
      * @return array
@@ -474,79 +389,41 @@ class BetsApi
      */
     protected function eventViewCall(int $eventId) : array
     {
-        return $this->call($this->endpoint('event/view') . '&event_id=' . $eventId);
+        return $this->call($this->endpoint('prematch') . '&FI=' . $eventId);
     }
-
+    
     /**
-     * Call the BetsApi to get the live events
-     *
-     * @param  int $sportId
-     * @param  int $leagueId
-     * @param  int $page
-     * @return array
-     * @throws CallFailedException
-     */
-    protected function liveEventsCall(int $sportId, int $leagueId, int $page) : array
-    {
-        $endpoint = $this->endpoint('events/inplay', $page)
-            . '&league_id=' . $leagueId . '&sport_id=' . $sportId;
-
-        return $this->call($endpoint);
-    }
-
-    /**
-     * Call the BetsApi to get the ended events
-     *
-     * @param  int $sportId
-     * @param  int $leagueId
-     * @param  int $page
-     * @return array
-     * @throws CallFailedException
-     */
-    protected function endedEventsCall(int $sportId, int $leagueId, int $page) : array
-    {
-        $endpoint = $this->endpointV2('events/ended', $page)
-            . '&sport_id=' . $sportId . '&league_id=' . $leagueId
-            . ($this->date ? '&day=' . $this->date : '');
-
-        return $this->call($endpoint);
-    }
-
-    /**
-     * Call the BetsApi to get the odds
+     * Call the B365Api to view an live event
      *
      * @param  int $eventId
      * @return array
      * @throws CallFailedException
      */
-    protected function oddsCall(int $eventId) : array
+    protected function eventLiveViewCall(int $eventId) : array
     {
-        $endpoint = $this->endpoint('event/odds/summary')
-            . '&event_id=' . $eventId;
-
-        return $this->call($endpoint);
+        return $this->call($this->endpoint('event') . '&FI=' . $eventId);
     }
 
     /**
-     * Call the BetsApi to get the events merge history
+     * Call the B365Api to get the live events
      *
-     * @param  int|null  $since  Unix timestamp
+     * @param  int $sportId
+     * @param  int $leagueId
      * @return array
      * @throws CallFailedException
      */
-    protected function eventsMergeHistoryCall(int $page, ?int $since = null) : array
+    protected function liveEventsCall(int $sportId, $leagueId = '') : array
     {
-        $endpoint = $this->endpoint('event/merge_history', $page);
-        
-        if ($since) {
-            $endpoint .= '&since_time=' . $since;
+        $endpoint = $this->endpoint('inplay_filter'). '&sport_id=' . $sportId;
+        if ($leagueId) {
+            $endpoint = $endpoint. '&league_id=' . $leagueId;
         }
 
         return $this->call($endpoint);
     }
 
     /**
-     * Trigger a call to the given the BetsApi service's endpoint
+     * Trigger a call to the given the B365Api service's endpoint
      * 
      * @param  string  $endpoint
      * @return array

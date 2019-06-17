@@ -31,6 +31,11 @@ class ServiceProvider extends BaseServiceProvider
                 $app->make(Client::class),
                 config('bets_api')
             );
+        });$this->app->bind(B365Api::class, function ($app) {
+            return new B365Api(
+                $app->make(Client::class),
+                config('bets_api')
+            );
         });
     }
 }
