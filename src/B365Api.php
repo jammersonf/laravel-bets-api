@@ -311,6 +311,13 @@ class B365Api
         return $events;
     }
 
+    public function results($event)
+    {
+        $endpoint = $this->endpoint('result'). '&event_id=' .$event;
+
+        return $this->call($endpoint);
+    }
+
     /**
      * Build the requested route's endpoint
      *
